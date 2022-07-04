@@ -89,9 +89,38 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
     amount,
   }: UpdateProductAmount) => {
     try {
-      // TODO
+      const stockResponse = await api.get("/stock");
+      const stock: Stock[] = stockResponse.data;
+
+      const productAmount = stock.reduce((acc, stock) => {
+        if (stock.id === productId) {
+          acc = stock.amount;
+          return acc;
+        }
+
+        return acc;
+      }, 0);
+
+      const data = cart.map((product) => {
+        if (product.id === productId) {
+          if (product.amount + amount <= 0) {
+            return product;
+          }
+          if (amount >= 1 && product.amount + amount > productAmount) {
+            toast.error("Quantidade solicitada fora de estoque");
+            return product;
+          }
+
+          return { ...product, amount: product.amount + amount };
+        }
+
+        return product;
+      });
+
+      setCart(data);
+      localStorage.setItem("@RocketShoes:cart", JSON.stringify(data));
     } catch {
-      // TODO
+      toast.error("Erro na alteração de quantidade do produto");
     }
   };
 
